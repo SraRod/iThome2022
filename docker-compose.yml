@@ -1,0 +1,28 @@
+version: '3.7'
+
+services:
+  jupyter:
+    container_name: "iThome2022"
+    build: .
+    shm_size: '32GB'
+    runtime: nvidia
+    user: root
+    working_dir: /home/$USER/workspace
+    environment:
+      NVIDIA_VISIBLE_DEVICES: 0
+      JUPYTER_ENABLE_LAB: 'yes'
+      PYTHONPATH: /home/$USER/workspace
+    volumes:
+      - .:/home/$USER/workspace
+      - ~/.ssh:/home/$USER/.ssh # for ssh
+      - ~/.gitconfig:/home/$USER/.gitconfig # for git
+      - ./.jupyter:/root/.jupyter
+    ports:
+      - 5566:8888
+      - 5000:5000
+    command: bash -c '
+      cd /home/$USER/workspace
+      && jupyter lab build
+      && jupyter labextension install jupyterlab-plotly
+      && jupyter labextension install @jupyter-widgets/jupyterlab-manager
+      && jupyter lab --no-browser --allow-root --ip=0.0.0.0 --ContentsManager.allow_hidden=True --NotebookApp.token="" --NotebookApp.password=""'

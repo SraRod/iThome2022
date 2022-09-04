@@ -19,3 +19,4 @@ albumentations==1.2.1
 optuna==3.0.0
 optuna-dashboard==0.7.2
 onnxruntime==1.12.1
+medmnist==2.1.0

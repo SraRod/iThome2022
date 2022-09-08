@@ -32,6 +32,6 @@ def make_dataset() -> None:
     df['img'] = df['img'].apply(lambda x: os.path.join('data/chestmnist/', x))
     
     df.to_csv(OUTPUT_CSV, index = False)
-            
+
 if __name__ == '__main__':
     make_dataset()

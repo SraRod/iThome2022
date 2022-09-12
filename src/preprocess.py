@@ -9,6 +9,7 @@ from typing import Text
 
 SPLITS = ['TRAIN', 'VALIDATION', 'TEST']
 BATCH_SIZE = 16
+LABEL_LIST = ['atelectasis', 'cardiomegaly', 'effusion', 'infiltration', 'mass', 'nodule', 'pneumonia', 'pneumothorax', 'consolidation', 'edema', 'emphysema', 'fibrosis', 'pleural', 'hernia']
 
 def prepare_transform() -> monai.transforms.transform:
     
@@ -16,7 +17,9 @@ def prepare_transform() -> monai.transforms.transform:
         monai.transforms.LoadImageD(keys = ['img']),
         monai.transforms.EnsureChannelFirstD(keys = ['img']),
         monai.transforms.ScaleIntensityD(keys = ['img']),
-        monai.transforms.ToTensorD(keys = ['img'])
+        monai.transforms.ToTensorD(keys = ['img'] + LABEL_LIST),
+        monai.transforms.AddChanneld(keys = LABEL_LIST),
+        monai.transforms.ConcatItemsd(keys = LABEL_LIST, name = 'labels'),
     ]
 
     transforms = monai.transforms.Compose(transforms)

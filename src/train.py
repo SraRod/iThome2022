@@ -49,7 +49,7 @@ if __name__ == '__main__':
     model = model.to(device)
     
     # set training hyperprameters
-    loss_function = getattr(torch.nn, CONFIG['train']['loss_function'])
+    loss_function = getattr(torch.nn, CONFIG['train']['loss_function'])()
     optimizer = getattr(torch.optim, CONFIG['train']['optimizer'])
     optimizer = optimizer(model.parameters(), CONFIG['train']['learning_rate'])
     val_interval = 1

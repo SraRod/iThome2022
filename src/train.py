@@ -1,8 +1,10 @@
 import os
+import yaml
 import tqdm
 import torch
 import monai
 import joblib
+import argparse
 import torchinfo
 import torchmetrics
 import pandas as pd
@@ -12,15 +14,17 @@ from src import preprocess
 from typing import Text
 from src.preprocess import SPLITS
 
-BATCH_SIZE = 128
-MAX_EPOCHS = 25
-STEPS_IN_EPOCH = 50
-
 
 if __name__ == '__main__':
     
+    # read configuration
+    args_parser = argparse.ArgumentParser()
+    args_parser.add_argument('--config', dest='config', required=True)
+    args = args_parser.parse_args()
+    CONFIG = yaml.safe_load(open(args.config))
+    
     # prepare dataset
-    df = pd.read_csv('data/dataset.csv')
+    df = pd.read_csv(CONFIG['make_dataset']['dataset_file'])
     datasets = {split : df[df['split'] == split].to_dict('records') for split in SPLITS}
 
     transforms = preprocess.prepare_transform()
@@ -31,27 +35,29 @@ if __name__ == '__main__':
     }
     data_generators = {
         split : torch.utils.data.DataLoader(processed_datasets[split],
-                                            batch_size = BATCH_SIZE,
+                                            batch_size =  CONFIG['train']['batch_size'],
                                             shuffle = True,
-                                            num_workers = 8,
-                                            prefetch_factor = 16,
                                             collate_fn = monai.data.utils.pad_list_data_collate,
-                                            pin_memory=torch.cuda.is_available())
+                                            pin_memory=torch.cuda.is_available(),
+                                            **CONFIG['train']['data_loader'])
         for split in SPLITS
     }
     
     # model initialization
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = my_model.get_backbone()
+    model = my_model.get_backbone(CONFIG)
     model = model.to(device)
     
     # set training hyperprameters
-    loss_function = torch.nn.BCEWithLogitsLoss()
-    optimizer = torch.optim.Adam(model.parameters(), 1e-4)
+    loss_function = getattr(torch.nn, CONFIG['train']['loss_function'])()
+    optimizer = getattr(torch.optim, CONFIG['train']['optimizer'])
+    optimizer = optimizer(model.parameters(), CONFIG['train']['learning_rate'])
     val_interval = 1
 
 
     # set init
+    MAX_EPOCHS = CONFIG['train']['max_epochs']
+    STEPS_IN_EPOCH = CONFIG['train']['steps_in_epoch']
     best_metric = -1
     best_metric_epoch = -1
     epoch_loss_values = []

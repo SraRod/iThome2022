@@ -45,6 +45,7 @@ class MultiLabelsModel(pl.LightningModule):
         opt = getattr(torch.optim, self.CONFIG['train']['optimizer'])
         opt = opt(params=self.parameters(), 
                   lr = self.CONFIG['train']['learning_rate'])
+        return opt
 
     def forward(self, x):
         y = self.backbone(x)

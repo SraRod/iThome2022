@@ -25,7 +25,7 @@ if __name__ == '__main__':
     
     # prepare dataset
     df = pd.read_csv(CONFIG['make_dataset']['dataset_file'])
-    datasets = {split : df[df['split'] == split].iloc[:256].to_dict('records') for split in SPLITS}
+    datasets = {split : df[df['split'] == split].to_dict('records') for split in SPLITS}
 
     transforms = preprocess.prepare_transform()
 

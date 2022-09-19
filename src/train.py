@@ -55,14 +55,19 @@ if __name__ == '__main__':
                                                        filename = 'epoch_{epoch:02d}_val_loss_{val/loss:.2f}_val_acc_{val/acc:.2f}_val_auroc_{val/auroc:.2f}',
                                                        auto_insert_metric_name = False)
     
+    # set logger
+    wandb_logger = pl.loggers.WandbLogger(project="iThome2022")
+    
     # set trainer
     trainer = pl.Trainer(
         callbacks = checkpoint_callback,
+        logger = wandb_logger,
         default_root_dir = CONFIG['train']['weights_folder'],
         max_epochs = CONFIG['train']['max_epochs'],
         limit_train_batches = CONFIG['train']['steps_in_epoch'],
         accelerator = 'cuda',
-        devices = 1)
+        devices = 1, 
+        profiler="simple")
     
     # model training
     trainer.fit(net, 

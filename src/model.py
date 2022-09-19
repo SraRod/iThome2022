@@ -17,7 +17,8 @@ def get_backbone(CONFIG: Dict):
         model = monai.networks.nets.EfficientNetBN('efficientnet-b0', 
                                                    spatial_dims = 2,
                                                    in_channels = 1,
-                                                   num_classes = 14)
+                                                   num_classes = 14,
+                                                   pretrained=False)
         return model
     else:
         print('do not support other backbone until now!')
@@ -64,7 +65,7 @@ class MultiLabelsModel(pl.LightningModule):
     
     def validation_step(self, batch: Any, batch_idx: int):
         inputs, preds, labels, loss = self.step(batch)
-        self.log('val/loss', loss.item(), on_step=True, on_epoch=True)
+        self.log('val/loss', loss.item(), on_step=False, on_epoch=True)
         return {
             'loss' : loss,
             'preds' : preds,

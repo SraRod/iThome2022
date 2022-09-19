@@ -22,7 +22,5 @@ services:
       - 5000:5000
     command: bash -c '
       cd /home/$USER/workspace
-      && jupyter lab build
-      && jupyter labextension install jupyterlab-plotly
-      && jupyter labextension install @jupyter-widgets/jupyterlab-manager
+      && git config --global --add safe.directory /home/$USER/workspace
       && jupyter lab --no-browser --allow-root --ip=0.0.0.0 --ContentsManager.allow_hidden=True --NotebookApp.token="" --NotebookApp.password=""'

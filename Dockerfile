@@ -15,3 +15,9 @@ RUN pip install --upgrade pip &&\
 
 # set workspace to python path
 ENV PYTHONPATH $PYTHONPATH
+
+
+# build jupyter
+RUN jupyter lab build &&\ 
+    jupyter labextension install jupyterlab-plotly &&\
+    jupyter labextension install @jupyter-widgets/jupyterlab-manager

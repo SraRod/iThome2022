@@ -60,12 +60,12 @@ class MultiLabelsModel(pl.LightningModule):
         
     def training_step(self, batch: Any, batch_idx: int):
         inputs, preds, labels, loss = self.step(batch)
-        self.log('train/loss', loss.item(), on_step=True, on_epoch=True)
+        self.log('train/loss', loss.item(), on_step=True, on_epoch=True, batch_size = inputs.shape[0])
         return loss
     
     def validation_step(self, batch: Any, batch_idx: int):
         inputs, preds, labels, loss = self.step(batch)
-        self.log('val/loss', loss.item(), on_step=False, on_epoch=True)
+        self.log('val/loss', loss.item(), on_step=False, on_epoch=True, batch_size = inputs.shape[0])
         return {
             'loss' : loss,
             'preds' : preds,

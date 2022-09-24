@@ -25,11 +25,16 @@ if __name__ == '__main__':
     # prepare dataset
     df = pd.read_csv(CONFIG['make_dataset']['dataset_file'])
     datasets = {split : df[df['split'] == split].to_dict('records') for split in CONFIG['train']['splits']}
+    
+    if CONFIG['train']['cached_train_part']:
+        num_sample_cached = CONFIG['train']['batch_size'] * CONFIG['train']['max_epochs'] * CONFIG['train']['steps_in_epoch']
+        datasets['TRAIN'] = datasets['TRAIN'][:num_sample_cached]
 
     transforms = preprocess.prepare_transform()
+    dataset_fun = getattr(monai.data, CONFIG['train']['dataset_fun']['name'])
 
     processed_datasets = {
-        split : monai.data.Dataset(data = datasets[split], transform = transforms) 
+        split : dataset_fun(data = datasets[split], transform = transforms, **CONFIG['train']['dataset_fun']['args']) 
         for split in CONFIG['train']['splits']
     }
     data_generators = {

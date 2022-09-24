@@ -1,6 +1,6 @@
 base:
   project: iThome2022
-  experiment: run_with_16workers_4pf
+  experiment: run_with_16workers_4pf_with_cached
   
 make_dataset:
   dataset_from: 'chestmnist'
@@ -13,9 +13,14 @@ train:
   gpus: 
   backbone: 'efficientnet-b0'
   splits : ['TRAIN', 'VALIDATION']
+  cached_train_part: True
   shuffle:
     TRAIN: True
     VALIDATION: False
+  dataset_fun:
+    name: CacheDataset
+    args:
+      num_workers: 16
   batch_size: 128
   max_epochs: 5
   steps_in_epoch: 50

@@ -1,5 +1,6 @@
 base:
   project: iThome2022
+  experiment: run_with_16workers_4pf
   
 make_dataset:
   dataset_from: 'chestmnist'
@@ -11,16 +12,17 @@ make_dataset:
 train:
   gpus: 
   backbone: 'efficientnet-b0'
-  batch_size: 128
-  max_epochs: 25
-  steps_in_epoch: 50
-  data_loader:
-    num_workers: 8
-    prefetch_factor: 16
+  splits : ['TRAIN', 'VALIDATION']
   shuffle:
     TRAIN: True
     VALIDATION: False
-    TEST: False
+  batch_size: 128
+  max_epochs: 5
+  steps_in_epoch: 50
+  data_loader:
+    num_workers: 16
+    prefetch_factor: 4
+
   loss_function: 'BCEWithLogitsLoss'
   optimizer: 'Adam'
   learning_rate: 0.0001

@@ -24,14 +24,8 @@ if __name__ == '__main__':
     CONFIG = yaml.safe_load(open(args.config))
     
     # prepare dataset
-    dataset_source = os.path.splitext(CONFIG['preprocess']['dataset_file'])[-1]
-    if dataset_source == '.csv':
-        df = pd.read_csv(CONFIG['preprocess']['dataset_file'])
-        datasets = {split : df[df['split'] == split].to_dict('records') for split in CONFIG['train']['splits']}
-    elif dataset_source == '.npz':
-        npz_files = np.load(CONFIG['preprocess']['dataset_file'])
-        datasets = preprocess.npz_dataset_to_dicts(npz_files, CONFIG['train']['splits'])
-    transforms = preprocess.prepare_transform(dataset_source)
+    datasets = preprocess.prepare_dataset(CONFIG)
+    transforms = preprocess.prepare_transform(CONFIG)
     
     dataset_fun = getattr(monai.data, CONFIG['train']['dataset_fun']['name'])
     processed_datasets = {
@@ -51,7 +45,7 @@ if __name__ == '__main__':
     
     # build model
     net = model.MultiLabelsModel(CONFIG)
-    print(torchinfo.summary(net, input_size=(16,1,28,28)))
+    print(torchinfo.summary(net, input_size=(16,1,*CONFIG['preprocess']['input_size'])))
     
     # set callback
     checkpoint_callback = pl.callbacks.ModelCheckpoint(dirpath = CONFIG['train']['weights_folder'],

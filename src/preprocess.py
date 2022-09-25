@@ -7,14 +7,14 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from typing import Text
+from typing import Text, List, Dict
 
 
 SPLITS = ['TRAIN', 'VALIDATION', 'TEST']
 BATCH_SIZE = 16
 LABEL_LIST = ['atelectasis', 'cardiomegaly', 'effusion', 'infiltration', 'mass', 'nodule', 'pneumonia', 'pneumothorax', 'consolidation', 'edema', 'emphysema', 'fibrosis', 'pleural', 'hernia']
 
-def npz_dataset_to_dicts(npz_files, splits):
+def npz_dataset_to_dicts(npz_files, splits) -> Dict:
     split_mapping = {
         'TRAIN' :'train',
         'VALIDATION' : 'val',
@@ -35,9 +35,22 @@ def npz_dataset_to_dicts(npz_files, splits):
     return datasets
 
 
-def prepare_transform(source) -> monai.transforms.transform:
+def prepare_dataset(CONFIG) -> Dict:
+    
+    dataset_source = os.path.splitext(CONFIG['preprocess']['dataset_file'])[-1]
+    if dataset_source == '.csv':
+        df = pd.read_csv(CONFIG['preprocess']['dataset_file'])
+        datasets = {split : df[df['split'] == split].to_dict('records') for split in CONFIG['train']['splits']}
+    elif dataset_source == '.npz':
+        npz_files = np.load(CONFIG['preprocess']['dataset_file'])
+        datasets = npz_dataset_to_dicts(npz_files, CONFIG['train']['splits'])
         
-    if source == '.csv':
+    return datasets
+
+def prepare_transform(CONFIG) -> monai.transforms.transform:
+    
+    dataset_source = os.path.splitext(CONFIG['preprocess']['dataset_file'])[-1]
+    if dataset_source == '.csv':
         transforms = [
             monai.transforms.LoadImageD(keys = ['img']),
             monai.transforms.EnsureChannelFirstD(keys = ['img']),
@@ -46,11 +59,14 @@ def prepare_transform(source) -> monai.transforms.transform:
             monai.transforms.AddChanneld(keys = LABEL_LIST),
             monai.transforms.ConcatItemsd(keys = LABEL_LIST, name = 'labels'),]
             
-    elif source == '.npz':
+    elif dataset_source == '.npz':
         transforms = [
             monai.transforms.ScaleIntensityD(keys = ['img']),
             monai.transforms.ToTensorD(keys = ['img']),
         ]
+        
+    if CONFIG['preprocess']['input_size'] != [28, 28]:
+        transforms += [monai.transforms.ResizeWithPadOrCropd(keys = ['img'], spatial_size = CONFIG['preprocess']['input_size'])]
 
     transforms = monai.transforms.Compose(transforms)
     
@@ -66,15 +82,8 @@ if __name__ == '__main__':
     CONFIG = yaml.safe_load(open(args.config))
     
     # build dataset
-    dataset_source = os.path.splitext(CONFIG['preprocess']['dataset_file'])[-1]
-    if dataset_source == '.csv':
-        df = pd.read_csv(CONFIG['preprocess']['dataset_file'])
-        datasets = {split : df[df['split'] == split].to_dict('records') for split in SPLITS}
-    elif dataset_source == '.npz':
-        npz_files = np.load(CONFIG['preprocess']['dataset_file'])
-        datasets = npz_dataset_to_dicts(npz_files, SPLITS)
-        
-    transforms = prepare_transform(dataset_source)
+    datasets = prepare_dataset(CONFIG)
+    transforms = prepare_transform(CONFIG)
     
     processed_datasets = {
         split : monai.data.Dataset(data = datasets[split], transform = transforms)    

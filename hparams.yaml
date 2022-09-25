@@ -1,16 +1,18 @@
 base:
   project: iThome2022
-  experiment: run_with_16workers_4pf_with_cached
+  experiment: run_with_non_blocking_npz25
   
 make_dataset:
   dataset_from: 'chestmnist'
-  tmp_folder: '/tmp'
+  tmp_folder: 'data'
   save_folder: 'data'
   img_subfilename: 'png'
   dataset_file: 'data/dataset.csv'
 
+preprocess:
+  dataset_file: 'data/chestmnist.npz'
+
 train:
-  gpus: 
   backbone: 'efficientnet-b0'
   splits : ['TRAIN', 'VALIDATION']
   cached_train_part: True
@@ -18,16 +20,20 @@ train:
     TRAIN: True
     VALIDATION: False
   dataset_fun:
-    name: CacheDataset
-    args:
-      num_workers: 16
-  batch_size: 128
-  max_epochs: 5
-  steps_in_epoch: 50
+    name: 'Dataset'
+    args: {}
   data_loader:
     num_workers: 16
     prefetch_factor: 4
-
+  batch_size: 128
+  max_epochs: 25
+  steps_in_epoch: 50
+  trainer:
+    accelerator: 'cuda'
+    devices: 1
+    profiler: 'simple'
+    benchmark: True
+    precision: 32
   loss_function: 'BCEWithLogitsLoss'
   optimizer: 'Adam'
   learning_rate: 0.0001

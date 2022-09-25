@@ -6,6 +6,7 @@ import monai
 import joblib
 import argparse
 import torchinfo
+import numpy as np
 import pandas as pd
 import pytorch_lightning as pl
 from src import model
@@ -23,20 +24,21 @@ if __name__ == '__main__':
     CONFIG = yaml.safe_load(open(args.config))
     
     # prepare dataset
-    df = pd.read_csv(CONFIG['make_dataset']['dataset_file'])
-    datasets = {split : df[df['split'] == split].to_dict('records') for split in CONFIG['train']['splits']}
+    dataset_source = os.path.splitext(CONFIG['preprocess']['dataset_file'])[-1]
+    if dataset_source == '.csv':
+        df = pd.read_csv(CONFIG['preprocess']['dataset_file'])
+        datasets = {split : df[df['split'] == split].to_dict('records') for split in CONFIG['train']['splits']}
+    elif dataset_source == '.npz':
+        npz_files = np.load(CONFIG['preprocess']['dataset_file'])
+        datasets = preprocess.npz_dataset_to_dicts(npz_files, CONFIG['train']['splits'])
+    transforms = preprocess.prepare_transform(dataset_source)
     
-    if CONFIG['train']['cached_train_part']:
-        num_sample_cached = CONFIG['train']['batch_size'] * CONFIG['train']['max_epochs'] * CONFIG['train']['steps_in_epoch']
-        datasets['TRAIN'] = datasets['TRAIN'][:num_sample_cached]
-
-    transforms = preprocess.prepare_transform()
     dataset_fun = getattr(monai.data, CONFIG['train']['dataset_fun']['name'])
-
     processed_datasets = {
         split : dataset_fun(data = datasets[split], transform = transforms, **CONFIG['train']['dataset_fun']['args']) 
         for split in CONFIG['train']['splits']
     }
+    
     data_generators = {
         split : torch.utils.data.DataLoader(processed_datasets[split],
                                             batch_size =  CONFIG['train']['batch_size'],
@@ -72,9 +74,7 @@ if __name__ == '__main__':
         default_root_dir = CONFIG['train']['weights_folder'],
         max_epochs = CONFIG['train']['max_epochs'],
         limit_train_batches = CONFIG['train']['steps_in_epoch'],
-        accelerator = 'cuda',
-        devices = 1, 
-        profiler = "simple")
+        **CONFIG['train']['trainer'])
     
     # model training
     trainer.fit(net, 

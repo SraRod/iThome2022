@@ -53,7 +53,7 @@ class MultiLabelsModel(pl.LightningModule):
         return y
 
     def step(self, batch: Any):
-        inputs, labels = batch['img'].to(self.device), batch['labels'].to(self.device)
+        inputs, labels = batch['img'].to(self.device, non_blocking=True), batch['labels'].to(self.device, non_blocking=True)
         preds = self.forward(inputs)
         loss = self.loss_function(preds, labels.float())
         return inputs, preds, labels, loss
@@ -73,8 +73,8 @@ class MultiLabelsModel(pl.LightningModule):
         }
     
     def validation_epoch_end(self, validation_step_outputs: List[Any]):
-        preds = torch.cat([output['preds'] for output in validation_step_outputs], dim=0)
-        labels = torch.cat([output['labels'] for output in validation_step_outputs], dim=0)
+        preds = torch.cat([output['preds'] for output in validation_step_outputs], dim=0).float()
+        labels = torch.cat([output['labels'] for output in validation_step_outputs], dim=0).long()
         probs = torch.nn.Sigmoid()(preds)
         
         # compute metrics and log

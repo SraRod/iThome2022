@@ -1,6 +1,6 @@
 base:
   project: iThome2022
-  experiment: run_with_benchmark_mode
+  experiment: run_epoch100_with_cosineLR
   
 make_dataset:
   dataset_from: 'chestmnist'
@@ -27,15 +27,26 @@ train:
     num_workers: 16
     prefetch_factor: 4
   batch_size: 128
-  max_epochs: 5
-  steps_in_epoch: 50
+  max_epochs: 100
+  steps_in_epoch: null
   trainer:
     accelerator: 'cuda'
     devices: 1
     profiler: 'simple'
+    log_every_n_steps: 1
     benchmark: True
     precision: 32
   loss_function: 'BCEWithLogitsLoss'
-  optimizer: 'Adam'
-  learning_rate: 0.0001
+  optimizer: 
+    name: 'Adam'
+    learning_rate: 0.001
+    scheduler: 
+      name: 'CosineAnnealingLR' 
+      params: 
+        verbose: true
+        T_max: 25
+        eta_min: 0.00003
+        last_epoch: -1
   weights_folder: 'artefacts/weights'
+
+  

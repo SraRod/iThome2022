@@ -48,6 +48,7 @@ if __name__ == '__main__':
     print(torchinfo.summary(net, input_size=(16,1,*CONFIG['preprocess']['input_size'])))
     
     # set callback
+    lr_monitor = pl.callbacks.LearningRateMonitor(logging_interval='step')
     checkpoint_callback = pl.callbacks.ModelCheckpoint(dirpath = CONFIG['train']['weights_folder'],
                                                        monitor = 'val/auroc',
                                                        mode = 'max',
@@ -63,15 +64,15 @@ if __name__ == '__main__':
     
     # set trainer
     trainer = pl.Trainer(
-        callbacks = checkpoint_callback,
+        callbacks = [lr_monitor, checkpoint_callback],
         logger = wandb_logger,
         default_root_dir = CONFIG['train']['weights_folder'],
         max_epochs = CONFIG['train']['max_epochs'],
         limit_train_batches = CONFIG['train']['steps_in_epoch'],
         **CONFIG['train']['trainer'])
     
+    
     # model training
     trainer.fit(net, 
                 data_generators['TRAIN'], 
                 data_generators['VALIDATION'])
-    

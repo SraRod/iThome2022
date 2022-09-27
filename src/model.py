@@ -50,10 +50,15 @@ class MultiLabelsModel(pl.LightningModule):
         
         
     def configure_optimizers(self):
-        opt = getattr(torch.optim, self.CONFIG['train']['optimizer'])
+        opt = getattr(torch.optim, self.CONFIG['train']['optimizer']['name'])
         opt = opt(params=self.parameters(), 
-                  lr = self.CONFIG['train']['learning_rate'])
-        return opt
+                  lr = self.CONFIG['train']['optimizer']['learning_rate'])
+        if self.CONFIG['train']['optimizer']['scheduler']:
+            lr_sdr = getattr(torch.optim.lr_scheduler, self.CONFIG['train']['optimizer']['scheduler']['name'])
+            lr_sdr = lr_sdr(opt, **self.CONFIG['train']['optimizer']['scheduler']['params'])
+            return [opt], [lr_sdr]
+        else:
+            return opt    
 
     def forward(self, x):
         y = self.backbone(x)
@@ -108,6 +113,7 @@ if __name__ == '__main__':
     test_input = torch.rand([16,1,28,28]).to(net.device)
     test_output = net(test_input)
     print('net output shape : ',  test_output.shape)
+
     
     
     

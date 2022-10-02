@@ -45,7 +45,7 @@ if __name__ == '__main__':
     
     # build model
     net = model.MultiLabelsModel(CONFIG)
-    print(torchinfo.summary(net, input_size=(16,1,*CONFIG['preprocess']['input_size'])))
+    print(torchinfo.summary(net, input_size=(16,CONFIG['preprocess']['input_channels'],*CONFIG['preprocess']['input_size'])))
     
     # set callback
     lr_monitor = pl.callbacks.LearningRateMonitor(logging_interval='step')

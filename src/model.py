@@ -16,14 +16,14 @@ def get_backbone(CONFIG: Dict):
         monai.networks.nets.efficientnet.efficientnet_params['efficientnet-b0'] = (1, 1, CONFIG['preprocess']['input_size'][0], 0.2, 0.2)
         model = monai.networks.nets.EfficientNetBN('efficientnet-b0', 
                                                    spatial_dims = 2,
-                                                   in_channels = 1,
+                                                   in_channels = CONFIG['preprocess']['input_channels'],
                                                    num_classes = 14,
-                                                   pretrained = False)
+                                                   pretrained = CONFIG['train']['pretrain'])
     elif 'resnet' in CONFIG['train']['backbone']:
         model = getattr(monai.networks.nets, CONFIG['train']['backbone'])
         model = model(spatial_dims = 2, 
                       pretrained = False, 
-                      n_input_channels = 1,
+                      n_input_channels = CONFIG['preprocess']['input_channel'],
                       num_classes = 14)
     try:
         return model

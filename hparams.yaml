@@ -48,5 +48,12 @@ train:
         eta_min: 0.00003
         last_epoch: -1
   weights_folder: 'artefacts/weights'
-
+  
+evaluate:
+  batch_size: 512
+  weights_path: 'artefacts/weights/epoch_97_val_loss_0.17_val_acc_0.95_val_auroc_0.73.ckpt'
+  tester:
+    accelerator: 'cuda'
+    devices: 1
+    precision: 32
   

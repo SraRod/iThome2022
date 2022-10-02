@@ -56,7 +56,11 @@ class MultiLabelsModel(pl.LightningModule):
         if self.CONFIG['train']['optimizer']['scheduler']:
             lr_sdr = getattr(torch.optim.lr_scheduler, self.CONFIG['train']['optimizer']['scheduler']['name'])
             lr_sdr = lr_sdr(opt, **self.CONFIG['train']['optimizer']['scheduler']['params'])
-            return [opt], [lr_sdr]
+            
+            if self.CONFIG['train']['optimizer']['scheduler']['name'] == 'ReduceLROnPlateau':
+                return {"optimizer": opt, "lr_scheduler": lr_sdr, "monitor": self.CONFIG['train']['optimizer']['scheduler']['monitor']}
+            else:
+                return [opt], [lr_sdr]
         else:
             return opt    
 
@@ -84,6 +88,15 @@ class MultiLabelsModel(pl.LightningModule):
             'labels' : labels
         }
     
+    def test_step(self, batch: Any, batch_idx: int):
+        inputs, preds, labels, loss = self.step(batch)
+        self.log('test/loss', loss.item(), on_step=False, on_epoch=True, batch_size = inputs.shape[0])
+        return {
+            'loss' : loss,
+            'preds' : preds,
+            'labels' : labels
+        }
+    
     def validation_epoch_end(self, validation_step_outputs: List[Any]):
         preds = torch.cat([output['preds'] for output in validation_step_outputs], dim=0).float()
         labels = torch.cat([output['labels'] for output in validation_step_outputs], dim=0).long()
@@ -94,6 +107,17 @@ class MultiLabelsModel(pl.LightningModule):
         auc_score = monai.metrics.compute_roc_auc(probs, labels, average='macro')
         self.log('val/acc', acc_score.item())
         self.log('val/auroc', auc_score.item())
+    
+    def test_epoch_end(self, validation_step_outputs: List[Any]):
+        preds = torch.cat([output['preds'] for output in validation_step_outputs], dim=0).float()
+        labels = torch.cat([output['labels'] for output in validation_step_outputs], dim=0).long()
+        probs = torch.nn.Sigmoid()(preds)
+        
+        # compute metrics and log
+        acc_score = torchmetrics.functional.accuracy(probs, labels, mdmc_average = 'global')
+        auc_score = monai.metrics.compute_roc_auc(probs, labels, average='macro')
+        self.log('test/acc', acc_score.item())
+        self.log('test/auroc', auc_score.item())
         
 
 

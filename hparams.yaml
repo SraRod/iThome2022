@@ -1,6 +1,6 @@
 base:
   project: iThome2022
-  experiment: run_epoch100_with_cosineLR
+  experiment: run_epoch100_with_pretrained
   
 make_dataset:
   dataset_from: 'chestmnist'
@@ -12,9 +12,11 @@ make_dataset:
 preprocess:
   dataset_file: 'data/chestmnist.npz'
   input_size: [28, 28]
+  input_channels: 3
 
 train:
   backbone: 'efficientnet-b0'
+  pretrain: True
   splits : ['TRAIN', 'VALIDATION']
   cached_train_part: True
   shuffle:

@@ -67,6 +67,9 @@ def prepare_transform(CONFIG) -> monai.transforms.transform:
         
     if CONFIG['preprocess']['input_size'] != [28, 28]:
         transforms += [monai.transforms.ResizeWithPadOrCropd(keys = ['img'], spatial_size = CONFIG['preprocess']['input_size'])]
+        
+    if CONFIG['preprocess']['input_channels'] != 1:
+        transforms += [monai.transforms.RepeatChannelD(keys = ['img'], repeats = CONFIG['preprocess']['input_channels'])]
 
     transforms = monai.transforms.Compose(transforms)
     

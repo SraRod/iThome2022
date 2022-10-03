@@ -1,6 +1,6 @@
 base:
   project: iThome2022
-  experiment: run_epoch100_with_pretrained
+  experiment: run_epoch100_with_warmup
   
 make_dataset:
   dataset_from: 'chestmnist'
@@ -42,6 +42,7 @@ train:
   optimizer: 
     name: 'Adam'
     learning_rate: 0.001
+    warmup_epochs: 5
     scheduler: 
       name: 'CosineAnnealingLR' 
       params: 

@@ -48,6 +48,27 @@ class MultiLabelsModel(pl.LightningModule):
         self.metrics_list = ['acc', 'auroc']
         self.metrics_history = { f'{dataset}/{metric}' : [] for dataset in ['train', 'val'] for metric in self.metrics_list}
         
+    # learning rate warm-up
+    def optimizer_step(
+        self,
+        epoch,
+        batch_idx,
+        optimizer,
+        optimizer_idx,
+        optimizer_closure,
+        on_tpu=False,
+        using_native_amp=False,
+        using_lbfgs=False,
+    ):
+        # update params
+        optimizer.step(closure=optimizer_closure)
+
+        # skip the first epochs        
+        if self.CONFIG['train']['optimizer']['warmup_epochs'] > 0:
+            if (self.trainer.global_step < self.CONFIG['train']['optimizer']['warmup_epochs'] * self.trainer.num_training_batches) :
+                lr_scale = min(1.0, float(self.trainer.global_step + 1) / float(self.CONFIG['train']['optimizer']['warmup_epochs'] * self.trainer.num_training_batches))
+                for pg in optimizer.param_groups:
+                    pg["lr"] = lr_scale * self.trainer.lr_scheduler_configs[0].scheduler._get_closed_form_lr()[0]
         
     def configure_optimizers(self):
         opt = getattr(torch.optim, self.CONFIG['train']['optimizer']['name'])

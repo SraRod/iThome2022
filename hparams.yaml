@@ -1,6 +1,6 @@
 base:
   project: iThome2022
-  experiment: run_epoch100_with_warmup
+  experiment: run_epoch100_with_label_smooth
   
 make_dataset:
   dataset_from: 'chestmnist'
@@ -39,6 +39,7 @@ train:
     benchmark: True
     precision: 32
   loss_function: 'BCEWithLogitsLoss'
+  label_smooth: 0.05
   optimizer: 
     name: 'Adam'
     learning_rate: 0.001

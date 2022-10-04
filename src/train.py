@@ -49,7 +49,7 @@ if __name__ == '__main__':
     
     # set callback
     lr_monitor = pl.callbacks.LearningRateMonitor(logging_interval='step')
-    checkpoint_callback = pl.callbacks.ModelCheckpoint(dirpath = CONFIG['train']['weights_folder'],
+    checkpoint_callback = pl.callbacks.ModelCheckpoint(dirpath = os.path.join(CONFIG['train']['weights_folder'], CONFIG['base']['experiment']),
                                                        monitor = 'val/auroc',
                                                        mode = 'max',
                                                        save_top_k = 3,

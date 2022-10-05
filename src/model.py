@@ -31,6 +31,8 @@ def get_backbone(CONFIG: Dict):
         print('do not support other backbone until now!')
                 
 
+def label_smoother(tensor, label_smooth_fact):
+    return tensor * (1 - 2 * label_smooth_fact) + label_smooth_fact
         
 class MultiLabelsModel(pl.LightningModule):
     """
@@ -92,7 +94,11 @@ class MultiLabelsModel(pl.LightningModule):
     def step(self, batch: Any):
         inputs, labels = batch['img'].to(self.device, non_blocking=True), batch['labels'].to(self.device, non_blocking=True)
         preds = self.forward(inputs)
-        loss = self.loss_function(preds, labels.float())
+        if self.CONFIG['train']['label_smooth'] > 0:
+            smooth_label = label_smoother(labels, self.CONFIG['train']['label_smooth'])
+            loss = self.loss_function(preds, smooth_label.float())
+        else:
+            loss = self.loss_function(preds, labels.float())
         return inputs, preds, labels, loss
         
     def training_step(self, batch: Any, batch_idx: int):

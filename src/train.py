@@ -33,6 +33,11 @@ if __name__ == '__main__':
         for split in CONFIG['train']['splits']
     }
     
+    # data augmentation
+    if CONFIG['train']['data_aug']['use']:
+        transforms_data_aug = preprocess.prepare_data_aug(CONFIG)
+        processed_datasets['TRAIN'] = monai.data.Dataset(data = processed_datasets['TRAIN'], transform = transforms_data_aug) 
+    
     data_generators = {
         split : torch.utils.data.DataLoader(processed_datasets[split],
                                             batch_size =  CONFIG['train']['batch_size'],

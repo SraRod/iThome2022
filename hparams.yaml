@@ -1,6 +1,6 @@
 base:
   project: iThome2022
-  experiment: run_epoch100_with_label_smooth
+  experiment: run_epoch100_with_data_aug
   
 make_dataset:
   dataset_from: 'chestmnist'
@@ -13,6 +13,7 @@ preprocess:
   dataset_file: 'data/chestmnist.npz'
   input_size: [28, 28]
   input_channels: 3
+  imagenet_statistics: False
 
 train:
   backbone: 'efficientnet-b0'
@@ -22,6 +23,9 @@ train:
   shuffle:
     TRAIN: True
     VALIDATION: False
+  data_aug:
+    use: True
+    prob: 0.25
   dataset_fun:
     name: 'Dataset'
     args: {}
@@ -39,7 +43,7 @@ train:
     benchmark: True
     precision: 32
   loss_function: 'BCEWithLogitsLoss'
-  label_smooth: 0.05
+  label_smooth: 0
   optimizer: 
     name: 'Adam'
     learning_rate: 0.001

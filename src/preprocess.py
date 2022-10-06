@@ -146,5 +146,26 @@ if __name__ == '__main__':
         plt.savefig(f'sampling of {split}.jpeg')
         plt.close()
         
+        
+    # sampling data augmentation from one sample
+    if CONFIG['train']['data_aug']['use']:
+        processed_dataset_da = monai.data.Dataset(data = datasets['TRAIN'][:1], transform = transforms) 
+        processed_dataset_da = monai.data.Dataset(data = processed_dataset_da, transform = transforms_data_aug)
+        data_generator_da = torch.utils.data.DataLoader(processed_dataset_da,
+                                            batch_size = 1,
+                                            shuffle = True,
+                                            collate_fn = monai.data.utils.pad_list_data_collate,
+                                            pin_memory=torch.cuda.is_available())
+        
+        plt.figure(figsize = (10, 10))
+        plt.suptitle(f'Data Augmentation Sampling', y = 0.92 ,fontsize=16)
+        for i in range(16):
+            plt.subplot(4,4,i+1)
+            for batch in data_generator_da:
+                plt.imshow(batch['img'][0][0].T, 'gray', vmin = 0, vmax = 1)
+            plt.axis('off')
+        plt.savefig(f'sampling of data augmentation.jpeg')
+        plt.close()
+        
             
     

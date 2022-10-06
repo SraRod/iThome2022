@@ -43,6 +43,9 @@ train:
     benchmark: True
     precision: 32
   loss_function: 'BCEWithLogitsLoss'
+  weight_decay:
+    p: 2
+    lambda: 0.001
   label_smooth: 0
   optimizer: 
     name: 'Adam'
@@ -59,7 +62,7 @@ train:
   
 evaluate:
   batch_size: 512
-  weights_path: 'artefacts/weights/epoch_97_val_loss_0.17_val_acc_0.95_val_auroc_0.73.ckpt'
+  weights_path: 'artefacts/weights/run_epoch100_with_pretrained/epoch_30_val_loss_0.16_val_acc_0.95_val_auroc_0.76.ckpt'
   tester:
     accelerator: 'cuda'
     devices: 1

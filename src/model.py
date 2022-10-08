@@ -33,6 +33,13 @@ def get_backbone(CONFIG: Dict):
 
 def label_smoother(tensor, label_smooth_fact):
     return tensor * (1 - 2 * label_smooth_fact) + label_smooth_fact
+
+def lp_penalty(tensor, p):
+    if p == 2:
+        return (tensor ** 2).sum
+    else:
+        return (tensor.abs() ** p).sum
+    
         
 class MultiLabelsModel(pl.LightningModule):
     """
@@ -99,11 +106,18 @@ class MultiLabelsModel(pl.LightningModule):
         y = self.backbone(x)
         return y
 
-    def weight_decay(self):
+    def lp_norm(self):
         reg_loss = 0
         for name, weight in self.named_parameters():
             if 'weight' in name:
                 reg_loss += torch.norm(weight, p = self.CONFIG['train']['weight_decay']['p'])
+        return reg_loss
+    
+    def lp_power_sum(self):
+        reg_loss = 0
+        for name, weight in self.named_parameters():
+            if 'weight' in name:
+                reg_loss += lp_penalty(weight, p = self.CONFIG['train']['weight_decay']['p'])
         return reg_loss
 
     def step(self, batch: Any):
@@ -120,8 +134,11 @@ class MultiLabelsModel(pl.LightningModule):
         inputs, preds, labels, loss = self.step(batch)
         self.log('train/loss', loss.item(), on_step=True, on_epoch=True, batch_size = inputs.shape[0])
         
-        reg_loss = self.weight_decay()
+        reg_loss = self.lp_norm()
         self.log('train/reg_loss', reg_loss.item(), on_step=True, on_epoch=True, batch_size = inputs.shape[0])
+        reg_loss = self.lp_power_sum()
+        self.log('train/reg_psum_loss', reg_loss.item(), on_step=True, on_epoch=True, batch_size = inputs.shape[0])
+        
         
         if self.CONFIG['train']['weight_decay']['lambda'] > 0:
             loss += reg_loss * self.CONFIG['train']['weight_decay']['lambda']
@@ -133,8 +150,10 @@ class MultiLabelsModel(pl.LightningModule):
         inputs, preds, labels, loss = self.step(batch)
         self.log('val/loss', loss.item(), on_step=True, on_epoch=True, batch_size = inputs.shape[0])
         
-        reg_loss = self.weight_decay()
-        self.log('val/reg_loss', reg_loss.item(), on_step=True, on_epoch=True, batch_size = inputs.shape[0])
+        reg_loss = self.lp_norm()
+        self.log('train/reg_loss', reg_loss.item(), on_step=True, on_epoch=True, batch_size = inputs.shape[0])
+        reg_loss = self.lp_power_sum()
+        self.log('train/reg_psum_loss', reg_loss.item(), on_step=True, on_epoch=True, batch_size = inputs.shape[0])
         
         if self.CONFIG['train']['weight_decay']['lambda'] > 0:
             loss += reg_loss

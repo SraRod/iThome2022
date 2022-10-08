@@ -1,6 +1,6 @@
 base:
   project: iThome2022
-  experiment: run_epoch100_with_data_aug
+  experiment: run_epoch100_with_AdamW
   
 make_dataset:
   dataset_from: 'chestmnist'
@@ -43,10 +43,14 @@ train:
     benchmark: True
     precision: 32
   loss_function: 'BCEWithLogitsLoss'
+  weight_decay:
+    p: 2
+    lambda: 0
   label_smooth: 0
   optimizer: 
-    name: 'Adam'
+    name: 'AdamW'
     learning_rate: 0.001
+    weight_decay: 0.02
     warmup_epochs: 5
     scheduler: 
       name: 'CosineAnnealingLR' 
@@ -59,7 +63,7 @@ train:
   
 evaluate:
   batch_size: 512
-  weights_path: 'artefacts/weights/epoch_97_val_loss_0.17_val_acc_0.95_val_auroc_0.73.ckpt'
+  weights_path: 'artefacts/weights/run_epoch100_with_pretrained/epoch_30_val_loss_0.16_val_acc_0.95_val_auroc_0.76.ckpt'
   tester:
     accelerator: 'cuda'
     devices: 1

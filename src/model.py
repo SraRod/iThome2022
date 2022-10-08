@@ -46,7 +46,7 @@ class MultiLabelsModel(pl.LightningModule):
         self.backbone = get_backbone(CONFIG)
         self.loss_function = getattr(torch.nn, CONFIG['train']['loss_function'])()
         
-        # define metrics collecter
+        # define metrics collector
         self.metrics_list = ['acc', 'auroc']
         self.metrics_history = { f'{dataset}/{metric}' : [] for dataset in ['train', 'val'] for metric in self.metrics_list}
         
@@ -73,9 +73,17 @@ class MultiLabelsModel(pl.LightningModule):
                     pg["lr"] = lr_scale * self.trainer.lr_scheduler_configs[0].scheduler._get_closed_form_lr()[0]
         
     def configure_optimizers(self):
+        
+        if 'weight_decay' in self.CONFIG['train']['optimizer']:
+            opt_lambda = self.CONFIG['train']['optimizer']['weight_decay']
+        else:
+            opt_lambda = 0
+        
         opt = getattr(torch.optim, self.CONFIG['train']['optimizer']['name'])
         opt = opt(params=self.parameters(), 
-                  lr = self.CONFIG['train']['optimizer']['learning_rate'])
+                  lr = self.CONFIG['train']['optimizer']['learning_rate'],
+                  weight_decay = opt_lambda)
+        
         if self.CONFIG['train']['optimizer']['scheduler']:
             lr_sdr = getattr(torch.optim.lr_scheduler, self.CONFIG['train']['optimizer']['scheduler']['name'])
             lr_sdr = lr_sdr(opt, **self.CONFIG['train']['optimizer']['scheduler']['params'])
@@ -91,6 +99,13 @@ class MultiLabelsModel(pl.LightningModule):
         y = self.backbone(x)
         return y
 
+    def weight_decay(self):
+        reg_loss = 0
+        for name, weight in self.named_parameters():
+            if 'weight' in name:
+                reg_loss += torch.norm(weight, p = self.CONFIG['train']['weight_decay']['p'])
+        return reg_loss
+
     def step(self, batch: Any):
         inputs, labels = batch['img'].to(self.device, non_blocking=True), batch['labels'].to(self.device, non_blocking=True)
         preds = self.forward(inputs)
@@ -104,11 +119,27 @@ class MultiLabelsModel(pl.LightningModule):
     def training_step(self, batch: Any, batch_idx: int):
         inputs, preds, labels, loss = self.step(batch)
         self.log('train/loss', loss.item(), on_step=True, on_epoch=True, batch_size = inputs.shape[0])
+        
+        reg_loss = self.weight_decay()
+        self.log('train/reg_loss', reg_loss.item(), on_step=True, on_epoch=True, batch_size = inputs.shape[0])
+        
+        if self.CONFIG['train']['weight_decay']['lambda'] > 0:
+            loss += reg_loss * self.CONFIG['train']['weight_decay']['lambda']
+            self.log('train/total_loss', loss.item(), on_step=True, on_epoch=True, batch_size = inputs.shape[0])
+            
         return loss
     
     def validation_step(self, batch: Any, batch_idx: int):
         inputs, preds, labels, loss = self.step(batch)
-        self.log('val/loss', loss.item(), on_step=False, on_epoch=True, batch_size = inputs.shape[0])
+        self.log('val/loss', loss.item(), on_step=True, on_epoch=True, batch_size = inputs.shape[0])
+        
+        reg_loss = self.weight_decay()
+        self.log('val/reg_loss', reg_loss.item(), on_step=True, on_epoch=True, batch_size = inputs.shape[0])
+        
+        if self.CONFIG['train']['weight_decay']['lambda'] > 0:
+            loss += reg_loss
+            self.log('val/total_loss', loss.item(), on_step=False, on_epoch=True, batch_size = inputs.shape[0])
+        
         return {
             'loss' : loss,
             'preds' : preds,
@@ -139,6 +170,8 @@ class MultiLabelsModel(pl.LightningModule):
         preds = torch.cat([output['preds'] for output in validation_step_outputs], dim=0).float()
         labels = torch.cat([output['labels'] for output in validation_step_outputs], dim=0).long()
         probs = torch.nn.Sigmoid()(preds)
+        self.test_preds = probs.cpu().numpy()
+        self.test_labels = labels.cpu().numpy()
         
         # compute metrics and log
         acc_score = torchmetrics.functional.accuracy(probs, labels, mdmc_average = 'global')

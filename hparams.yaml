@@ -1,6 +1,6 @@
 base:
   project: iThome2022
-  experiment: run_epoch100_with_data_aug
+  experiment: run_epoch100_with_L2_REG
   
 make_dataset:
   dataset_from: 'chestmnist'

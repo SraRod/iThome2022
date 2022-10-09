@@ -1,6 +1,6 @@
 base:
   project: iThome2022
-  experiment: run_epoch100_with_AdamW
+  experiment: run_epoch100_with_L2
   
 make_dataset:
   dataset_from: 'chestmnist'
@@ -45,12 +45,12 @@ train:
   loss_function: 'BCEWithLogitsLoss'
   weight_decay:
     p: 2
-    lambda: 0
+    lambda: 0.00001 # 0.01 * 0.001
   label_smooth: 0
   optimizer: 
-    name: 'AdamW'
+    name: 'Adam'
     learning_rate: 0.001
-    weight_decay: 0.02
+    weight_decay: 0
     warmup_epochs: 5
     scheduler: 
       name: 'CosineAnnealingLR' 

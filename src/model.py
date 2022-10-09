@@ -36,9 +36,9 @@ def label_smoother(tensor, label_smooth_fact):
 
 def lp_penalty(tensor, p):
     if p == 2:
-        return (tensor ** 2).sum
+        return (tensor ** 2).sum()
     else:
-        return (tensor.abs() ** p).sum
+        return (tensor.abs() ** p).sum()
     
         
 class MultiLabelsModel(pl.LightningModule):

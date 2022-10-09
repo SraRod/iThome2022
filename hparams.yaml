@@ -45,7 +45,7 @@ train:
   loss_function: 'BCEWithLogitsLoss'
   weight_decay:
     p: 2
-    lambda: 0.01
+    lambda: 0.00001 # 0.01 * 0.001
   label_smooth: 0
   optimizer: 
     name: 'Adam'

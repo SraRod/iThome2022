@@ -68,4 +68,8 @@ evaluate:
     accelerator: 'cuda'
     devices: 1
     precision: 32
+    
+export:
+  target: 'deploy/chestmnist/1'
+  format: 'onnx'
   

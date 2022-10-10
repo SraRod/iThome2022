@@ -63,9 +63,18 @@ train:
   
 evaluate:
   batch_size: 512
-  weights_path: 'artefacts/weights/run_epoch100_with_pretrained/epoch_30_val_loss_0.16_val_acc_0.95_val_auroc_0.76.ckpt'
+  weights_path: 'artefacts/weights/run_epoch100_with_l2/epoch_73_val_loss_0.16_val_acc_0.95_val_auroc_0.78.ckpt'
   tester:
     accelerator: 'cuda'
     devices: 1
     precision: 32
+    
+export:
+  target: 'deploy/chestmnist_net/1'
+  format: 'onnx'
+  
+triton:
+  batch_size: 512
+  triton_api_path: 'iThome2022_Triton:8000'
+  module_name: 'chestmnist_net'
   

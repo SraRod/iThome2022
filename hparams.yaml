@@ -70,6 +70,11 @@ evaluate:
     precision: 32
     
 export:
-  target: 'deploy/chestmnist/1'
+  target: 'deploy/chestmnist_net/1'
   format: 'onnx'
+  
+triton:
+  batch_size: 512
+  triton_api_path: 'iThome2022_Triton:8000'
+  module_name: 'chestmnist_net'
   
